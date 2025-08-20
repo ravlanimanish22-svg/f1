@@ -15,7 +15,7 @@ jobs:
         image: postgres:15
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_PASSWORD: Mobifly2024
           POSTGRES_DB: fastapi
         ports:
           - 5432:5432
@@ -26,24 +26,16 @@ jobs:
           --health-retries 5
 
     steps:
-      # 1️⃣ Checkout code
+      # 1️⃣ Checkout Code
       - uses: actions/checkout@v3
 
-      # 2️⃣ Load .env.ci variables
-      - name: Load environment variables
-        run: |
-          echo "Loading environment variables from .github/workflows/.env.ci"
-          set -a
-          source .github/workflows/.env.ci
-          set +a
-
-      # 3️⃣ Setup Python
+      # 2️⃣ Setup Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      # 4️⃣ Cache dependencies
+      # 3️⃣ Cache Dependencies
       - name: Cache pip
         uses: actions/cache@v3
         with:
@@ -52,30 +44,34 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      # 5️⃣ Install dependencies
+      # 4️⃣ Install Dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install aiosqlite
 
-      # 6️⃣ Run tests
+      # 5️⃣ Run Tests
       - name: Run tests
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/fastapi
         run: pytest -v
 
-      # 7️⃣ Build Docker image
+      # 6️⃣ Build Docker Image
       - name: Build Docker image
         run: docker build -t myapp:latest .
 
-      # 8️⃣ Run Docker container
-      - name: Run Docker container
+      # 7️⃣ Run Docker Container with network
+      - name: Run Docker Container
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:${{ secrets.POSTGRES_PASSWORD }}@host.docker.internal:5432/fastapi
         run: |
-          docker run -d -p 8000:8000 --name myapp --env-file .github/workflows/.env.ci myapp:latest
-          sleep 10
+          docker run -d -p 8000:8000 --name myapp --env DATABASE_URL=$DATABASE_URL myapp:latest
+          sleep 15
           docker ps -a
           docker logs myapp
 
-      # 9️⃣ Healthcheck
+      # 8️⃣ Healthcheck
       - name: Healthcheck
         run: |
           for i in {1..12}; do
