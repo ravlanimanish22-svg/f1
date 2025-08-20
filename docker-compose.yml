@@ -1,5 +1,3 @@
-
-
 services:
   app:
     build: .
@@ -8,12 +6,14 @@ services:
     env_file:
       - .env
     depends_on:
-      - db
+      - postgres   # ⬅️ यहाँ db की जगह postgres लिखो
 
-  db:
+  postgres:       # ⬅️ service का नाम db → postgres कर दिया
     image: postgres:15
-    env_file:
-      - .env
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Mobifly2024
+      POSTGRES_DB: fastapi
     ports:
       - "5432:5432"
     volumes:
