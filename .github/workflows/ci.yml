@@ -56,17 +56,11 @@ jobs:
   # ================= Deploy =================
   deploy:
     runs-on: self-hosted
-    needs: build
-
+    needs: build   # <- ye ensure karega ki build job ke baad hi chale
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      - name: Show workspace path
-        shell: pwsh
-        run: |
-          Write-Host "Workspace: $env:GITHUB_WORKSPACE"
-
-      - name: Cleanup previous deployment
+      - name: Deploy to Local PC
         shell: pwsh
         run: |
           $deployPath = "D:\cd"
@@ -98,21 +92,12 @@ jobs:
         shell: pwsh
         run: |
           $deployPath = "D:\cd"
-          $venvPath   = "$deployPath\venv"
-          $pythonExe  = "C:\Users\CROMA\venv\Scripts\python.exe"
-
-          # Create venv if not exists
-          if (-not (Test-Path $venvPath)) {
-            & $pythonExe -m venv $venvPath
+          if (-not (Test-Path "$deployPath\venv")) {
+            python -m venv "$deployPath\venv"
           }
-
-          # Use venv python
-          $venvPython = "$venvPath\Scripts\python.exe"
-          $env:PATH   = "$venvPath\Scripts;$env:PATH"
-
-          # Install dependencies
-          & $venvPython -m pip install --upgrade pip
-          & $venvPython -m pip install -r "$deployPath\requirements.txt"
+          $env:PATH = "$deployPath\venv\Scripts;$env:PATH"
+          python -m pip install --upgrade pip
+          python -m pip install -r "$deployPath\requirements.txt"
 
       - name: Run FastAPI
         shell: pwsh
