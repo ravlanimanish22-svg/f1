@@ -98,12 +98,21 @@ jobs:
         shell: pwsh
         run: |
           $deployPath = "D:\cd"
-          if (-not (Test-Path "$deployPath\venv")) {
-            python -m venv "$deployPath\venv"
+          $venvPath   = "$deployPath\venv"
+          $pythonExe  = "C:\Users\CROMA\venv\Scripts\python.exe"
+
+          # Create venv if not exists
+          if (-not (Test-Path $venvPath)) {
+            & $pythonExe -m venv $venvPath
           }
-          $env:PATH = "$deployPath\venv\Scripts;$env:PATH"
-          python -m pip install --upgrade pip
-          python -m pip install -r "$deployPath\requirements.txt"
+
+          # Use venv python
+          $venvPython = "$venvPath\Scripts\python.exe"
+          $env:PATH   = "$venvPath\Scripts;$env:PATH"
+
+          # Install dependencies
+          & $venvPython -m pip install --upgrade pip
+          & $venvPython -m pip install -r "$deployPath\requirements.txt"
 
       - name: Run FastAPI
         shell: pwsh
